@@ -1,8 +1,5 @@
 **A Google Account Data Exfiltration Tool**
-
-<img width="1800" height="1200" alt="Untitled" src="https://github.com/user-attachments/assets/b8ae894f-d7ce-45a1-9585-4c78a5fdac5c" />
-
-
+<img width="1215" height="692" alt="Untitled(1)" src="https://github.com/user-attachments/assets/a0299bd1-3b78-49a3-bad8-733c54db50e2" />
 ## Legal Disclaimer
 
 **FOR AUTHORIZED TESTING ONLY**
