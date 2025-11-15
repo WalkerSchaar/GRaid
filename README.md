@@ -1,5 +1,4 @@
 <img width="607" height="346" alt="Untitled(1)" src="https://github.com/user-attachments/assets/a0299bd1-3b78-49a3-bad8-733c54db50e2" />
-**A Google Account Data Exfiltration Tool**
 
 ## Legal Disclaimer
 
@@ -14,7 +13,7 @@ This tool is intended for security researchers, penetration testers, and authori
 GRaid demonstrates post-compromise data exfiltration capabilities available to attackers who have obtained valid session tokens through AiTM phishing, token theft, or credential compromise. The tool uses legitimate Google APIs to extract data, showing that 2FA alone does not prevent data exfiltration when session tokens are compromised.
 
 **Supported Services:**
-- Gmail (emails, attachments, labels)<img width="1800" height="1200" alt="Untitled" src="https://github.com/user-attachments/assets/608c21c5-1f72-4d8c-bfd9-00e54fa2acbc" />
+- Gmail (emails, attachments, labels)
 
 - Google Drive (files, folders, documents)
 - Google Calendar (events, calendars)
