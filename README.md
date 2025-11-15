@@ -10,15 +10,14 @@ This tool is intended for security researchers, penetration testers, and authori
 
 ## Overview
 
-GRaid demonstrates post-compromise data exfiltration capabilities available to attackers who have obtained valid session tokens through AiTM phishing, token theft, or credential compromise. The tool uses legitimate Google APIs to extract data, showing that 2FA alone does not prevent data exfiltration when session tokens are compromised.
+GRaid demonstrates post-compromise data exfiltration capabilities available to attackers who have obtained valid session tokens through AiTM phishing, token theft, or credential compromise. The tool uses legitimate Google APIs to extract data.
 
 **Supported Services:**
-- Gmail (emails, attachments, labels)
-
-- Google Drive (files, folders, documents)
-- Google Calendar (events, calendars)
-- Google Contacts (contact directory)
-- Google Photos (media items, albums)
+- Gmail
+- Google Drive
+- Google Calendar
+- Google Contacts
+- Google Photos
 - Google Tasks
 - Google Keep (Workspace)
 - YouTube (subscriptions, playlists, likes)
