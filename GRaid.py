@@ -340,10 +340,10 @@ class GoogleDataExfiltrator:
         print("="*60)
         active_count = sum(1 for s in active_services.values() if s.get('active'))
         print(f"\nActive services: {active_count}/{len(active_services)}")
-        print("\nServices with data:")
+        print("\n\033[92mServices with data:\033[0m")
         for service, info in active_services.items():
             if info.get('active'):
-                print(f"  ✓ {service.upper()}")
+                print(f"\033[92m  ✓ {service.upper()}\033[0m")
         
         print("\nInactive/Empty services:")
         for service, info in active_services.items():
@@ -352,17 +352,17 @@ class GoogleDataExfiltrator:
                 print(f"  ✗ {service.upper()} - {reason}")
         
         print("\n" + "="*60)
-        print("Additional Manual Access URLs")
+        print("\033[92mAdditional Manual Access URLs\033[0m")
         print("="*60)
-        print("\nPassword Manager:")
-        print("  https://passwords.google.com")
+        print("\n\033[92mPassword Manager:\033[0m")
+        print("\033[92m  https://passwords.google.com\033[0m")
         
         if self.is_workspace:
-            print("\nGoogle Groups:")
-            print("  https://groups.google.com/my-groups")
+            print("\n\033[92mGoogle Groups:\033[0m")
+            print("\033[92m  https://groups.google.com/my-groups\033[0m")
         else:
-            print("\nGoogle Groups (Personal accounts):")
-            print("  https://groups.google.com/my-groups")
+            print("\n\033[92mGoogle Groups (Personal accounts):\033[0m")
+            print("\033[92m  https://groups.google.com/my-groups\033[0m")
         
         print("="*60 + "\n")
         
