@@ -351,6 +351,16 @@ class GoogleDataExfiltrator:
                 reason = info.get('reason', 'Unknown')
                 print(f"  ✗ {service.upper()} - {reason}")
         
+        print("\n" + "="*60)
+        print("Additional Manual Access URLs")
+        print("="*60)
+        print("\nPassword Manager:")
+        print("  https://passwords.google.com")
+        
+        if self.is_workspace:
+            print("\nGoogle Groups:")
+            print("  https://groups.google.com/my-groups")
+        
         print("="*60 + "\n")
         
         return active_services
