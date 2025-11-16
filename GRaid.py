@@ -47,9 +47,7 @@ class GoogleDataExfiltrator:
             'drive_files': 50,          # Max files to download
             'calendar_events': 1000,    # Max events per calendar
             'contacts': None,           # None = unlimited
-            'photos': 50,               # Max photos to download
             'tasks': None,              # None = unlimited
-            'keep_notes': 100,          # Max notes to download
             'youtube_videos': 500       # Max liked videos
         }
         
