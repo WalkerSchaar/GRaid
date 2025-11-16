@@ -17,7 +17,6 @@ GRaid demonstrates post-compromise data exfiltration capabilities available to a
 - Google Drive
 - Google Calendar
 - Google Contacts
-- Google Photos
 - Google Tasks
 - Google Keep (Workspace)
 - YouTube (subscriptions, playlists, likes)
