@@ -25,7 +25,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/photoslibrary.readonly',
     'https://www.googleapis.com/auth/tasks.readonly',
-    'https://www.googleapis.com/auth/keep.readonly',
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/admin.directory.user.readonly',
     'https://www.googleapis.com/auth/admin.directory.group.readonly',
@@ -96,7 +95,6 @@ class GoogleDataExfiltrator:
             self.services['people'] = build('people', 'v1', credentials=self.creds)
             self.services['photoslibrary'] = build('photoslibrary', 'v1', credentials=self.creds, static_discovery=False)
             self.services['tasks'] = build('tasks', 'v1', credentials=self.creds)
-            self.services['keep'] = build('keep', 'v1', credentials=self.creds)
             self.services['youtube'] = build('youtube', 'v3', credentials=self.creds)
             
             # Try to initialize admin services (will fail for non-admin users)
@@ -1519,17 +1517,16 @@ Examples:
     # Show banner
     banner = """
 ┌──────────────────────────────────────┐
-   _____ _____            _____ _____   
-  / ____|  __ \     /\   |_   _|  __ \   
- | |  __| |__) |   /  \    | | | |  | | 
- | | |_ |  _  /   / /\ \   | | | |  | | 
- | |__| | | \ \  / ____ \ _| |_| |__| | 
-  \_____|_|  \_\/_/    \_\_____|_____/  
+│  _____ _____            _____ _____  │
+│ / ____|  __ \     /\   |_   _|  __ \ │
+│| |  __| |__) |   /  \    | | | |  | |│
+│| | |_ |  _  /   / /\ \   | | | |  | |│
+│| |__| | | \ \  / ____ \ _| |_| |__| |│
+│ \_____|_|  \_\/_/    \_\_____|_____/ │
 └──────────────────────────────────────┘
-               G R A I D
- ──────────────────────────────────────
                                        
   Google Account Data Exfiltration Tool
+  For authorized security testing only
     """
     print(banner)
     
