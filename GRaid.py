@@ -1299,6 +1299,23 @@ class GoogleDataExfiltrator:
         print("\n" + "="*60)
         print(f"Exfiltration complete! Data saved to: {self.output_dir}")
         print("="*60)
+        
+        # Show additional manual access links
+        self._show_manual_links()
+    
+    def _show_manual_links(self):
+        """Display links for manual data access"""
+        print("\n" + "="*60)
+        print("Additional Manual Access")
+        print("="*60)
+        print("\nPassword Manager:")
+        print("https://passwords.google.com")
+        
+        if self.is_workspace:
+            print("\nGoogle Groups:")
+            print("https://groups.google.com/my-groups")
+        
+        print("\n" + "="*60)
     
     def exfiltrate_active_only(self):
         """Probe services and only exfiltrate from active ones"""
@@ -1334,6 +1351,9 @@ class GoogleDataExfiltrator:
         print("\n" + "="*60)
         print(f"Targeted exfiltration complete! Data saved to: {self.output_dir}")
         print("="*60)
+        
+        # Show additional manual access links
+        self._show_manual_links()
     
     def exfiltrate_interactive(self):
         """Probe services, then let user choose what to exfiltrate"""
@@ -1436,6 +1456,9 @@ class GoogleDataExfiltrator:
             print("\n" + "="*60)
             print(f"Exfiltration complete! Data saved to: {self.output_dir}")
             print("="*60)
+            
+            # Show additional manual access links
+            self._show_manual_links()
             
         except (KeyboardInterrupt, EOFError):
             print("\n[!] Exfiltration cancelled by user.")
@@ -1556,6 +1579,7 @@ Examples:
     # Probe-only mode
     if args.probe:
         exfiltrator.probe_active_services()
+        exfiltrator._show_manual_links()
         return 0
     
     # Run exfiltration based on arguments
