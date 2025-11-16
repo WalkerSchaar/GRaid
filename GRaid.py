@@ -360,6 +360,9 @@ class GoogleDataExfiltrator:
         if self.is_workspace:
             print("\nGoogle Groups:")
             print("  https://groups.google.com/my-groups")
+        else:
+            print("\nGoogle Groups (Personal accounts):")
+            print("  https://groups.google.com/my-groups")
         
         print("="*60 + "\n")
         
