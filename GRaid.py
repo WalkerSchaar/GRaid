@@ -352,7 +352,7 @@ class GoogleDataExfiltrator:
                 print(f"  ✗ {service.upper()} - {reason}")
         
         print("\n" + "="*60)
-        print("\033[92mAdditional Manual Access URLs\033[0m")
+        print("Additional Manual Access URLs")
         print("="*60)
         print("\n\033[92mPassword Manager:\033[0m")
         print("\033[92m  https://passwords.google.com\033[0m")
