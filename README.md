@@ -40,7 +40,7 @@ GRaid demonstrates post-compromise data exfiltration capabilities available to a
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/graid.git
+git clone https://github.com/WalkerSchaar/graid.git
 cd graid
 
 # Install dependencies
