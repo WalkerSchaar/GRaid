@@ -78,9 +78,20 @@ class GoogleDataExfiltrator:
                     print("5. Download and save as 'credentials.json'")
                     return False
                 
+                print("[*] Opening browser for authentication...")
+                import sys
+                import io
+                
+                # Suppress the authorization URL output
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_file, SCOPES)
                 self.creds = flow.run_local_server(port=0)
+                
+                # Restore stdout
+                sys.stdout = old_stdout
             
             with open(token_file, 'wb') as token:
                 pickle.dump(self.creds, token)
@@ -1505,17 +1516,24 @@ Examples:
     
     # Show banner
     banner = r"""
-┌──────────────────────────────────────┐
-│  _____ _____            _____ _____  │
-│ / ____|  __ \     /\   |_   _|  __ \ │
-│| |  __| |__) |   /  \    | | | |  | |│
-│| | |_ |  _  /   / /\ \   | | | |  | |│
-│| |__| | | \ \  / ____ \ _| |_| |__| |│
-│ \_____|_|  \_\/_/    \_\_____|_____/ │
-└──────────────────────────────────────┘
+⠀⠀⠀⠀⠀⢀⣤⣶⣾⣿⣿⣿⣷⣶⣤⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀
+⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀
+⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀
+⠀⠀⠀⠀⢰⡟⠛⠉⠙⢻⣿⡟⠋⠉⠙⢻⡇⠀⠀⠀⠀
+⠀⠀⠀⠀⢸⣷⣀⣀⣠⣾⠛⣷⣄⣀⣀⣼⡏⠀⠀⠀⠀
+⠀⠀⣀⠀⠀⠛⠋⢻⣿⣧⣤⣸⣿⡟⠙⠛⠀⠀⣀⠀⠀
+⢀⣰⣿⣦⠀⠀⠀⠼⣿⣿⣿⣿⣿⡷⠀⠀⠀⣰⣿⣆⡀
+⢻⣿⣿⣿⣧⣄⠀⠀⠁⠉⠉⠋⠈⠀⠀⣀⣴⣿⣿⣿⡿
+⠀⠀⠀⠈⠙⠻⣿⣶⣄⡀⠀⢀⣠⣴⣿⠿⠛⠉⠁⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠉⣻⣿⣷⣿⣟⠉⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣠⣴⣿⠿⠋⠉⠙⠿⣷⣦⣄⡀⠀⠀⠀⠀
+⣴⣶⣶⣾⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠙⠻⣿⣷⣶⣶⣦
+⠙⢻⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⡿⠋
+⠀⠀⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⠀
                                        
-  Google Account Data Exfiltration Tool
-  For authorized security testing only
+  -------------------------
+          GRaid
     """
     print(banner)
     
