@@ -112,12 +112,6 @@ exfiltrated_data/
 └── workspace_admin/
 ```
 
----
-
-
-## Contributing
-
-Contributions are welcome. Please ensure all contributions maintain the tool's focus on authorized security testing.
 
 ---
 
@@ -126,7 +120,3 @@ Contributions are welcome. Please ensure all contributions maintain the tool's f
 MIT License - See LICENSE file for details
 
 ---
-
-## Author
-
-Created for security research and authorized testing purposes.
