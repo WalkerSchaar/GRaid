@@ -7,6 +7,7 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 import json
 import pickle
 import base64
+import shutil
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -1533,9 +1534,11 @@ Examples:
 ⠀⠀⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⠀
                                        
   -------------------------
-          GRaid
+          G R A I D
     """
-    print(banner)
+columns = shutil.get_terminal_size().columns
+for line in banner.splitlines():
+    print(line.center(columns))
     
     # Set up limits
     if args.no_limits:
