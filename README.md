@@ -104,7 +104,6 @@ exfiltrated_data/
 ├── drive/
 ├── calendar/
 ├── contacts/
-├── photos/
 ├── tasks/
 ├── youtube/
 ├── workspace_groups/
