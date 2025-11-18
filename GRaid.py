@@ -1499,7 +1499,7 @@ Examples:
         "⠙⢻⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⡿⠋",
         "⠀⠀⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⠀",
         "",
-        "         G R A I D        ",
+        "        G R A I D         ",
         "      For authorized security testing only",
     ]
     
